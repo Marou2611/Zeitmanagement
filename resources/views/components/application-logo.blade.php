@@ -1,0 +1,1 @@
+<img src="{{ asset('images/logo-quer.svg') }}" alt="Logo Hochschule Osnabrück" />
