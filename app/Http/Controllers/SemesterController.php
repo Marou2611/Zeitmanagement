@@ -28,8 +28,8 @@ class SemesterController extends Controller
 
         // if notification object is not found
         if (!$notification) {
-            // get all lecturers
-            $lecturers = Lecturer::all();
+            // get all lecturers who are active
+            $lecturers = Lecturer::where('active', true)->get();
 
             // loop through all lecturers
             foreach ($lecturers as $lecturer) {

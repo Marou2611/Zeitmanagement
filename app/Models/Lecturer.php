@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 
 
 class Lecturer extends Model
 {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
+
+    protected $fillable = ['firstname', 'lastname', 'email', 'phone', 'active'];
 
     public function timetables()
     {

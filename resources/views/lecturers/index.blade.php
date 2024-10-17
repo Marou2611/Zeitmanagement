@@ -5,6 +5,9 @@
 
 @include('snippets.error')
 
+<div class="text-end">
+    <a href="{{ url('lecturers/import') }}" class="btn btn-secondary mb-3">Dozent:innen importieren</a>
+</div>
 {{ $entities->links() }}
 <div class="table-responsive">
     <table class="table table-striped">
@@ -17,7 +20,11 @@
         <tbody>
             @foreach($entities as $index=>$lecturers)
             <tr>
-                <td>{{ $lecturers->firstname }} {{ $lecturers->lastname }}</td>
+                <td>{{ $lecturers->firstname }} {{ $lecturers->lastname }}
+                    @if(!$lecturers->active)
+                    <span class="badge bg-dark text-white">inaktiv</span>
+                    @endif
+                </td>
                 <td class="text-end">
                     <div class="btn-group">
                         <a href="{{url('lecturers/show/'.$lecturers->id)}}" class="btn btn-info"><i class="fa fa-eye"></i></a>

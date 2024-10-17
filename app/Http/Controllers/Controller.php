@@ -16,7 +16,6 @@ class Controller extends BaseController
     protected $validations = [];
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-
     public function getIndex()
     {
         $class = $this->className;
@@ -61,6 +60,12 @@ class Controller extends BaseController
             foreach ($this->fields as $field) {
                 $entity->$field = $req->input($field);
             }
+
+            # check if class is lecturer
+            if ($this->entityName == 'lecturers') {
+                $entity->active = $req->has('active') ? 1 : 0;
+            }
+
             $entity->save();
         }
         return redirect($this->entityName . '/index');

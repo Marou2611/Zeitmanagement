@@ -1,7 +1,7 @@
 @extends('layouts.layout')
 
 @section('content')
-<h1>Dozent bearbeiten</h1>
+<h1 class="my-3">Dozent bearbeiten</h1>
 @include('snippets.error')
 
 <form method="POST" action="{{ url('lecturers/update/'.$entity->id) }}">
@@ -23,6 +23,10 @@
     <div class="form-floating mb-3">
         <input type="text" name="phone" class="form-control" id="phone" placeholder="Telefon" value="{{ old('phone', $entity->phone) }}">
         <label for="phone">Telefon</label>
+    </div>
+    <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="active" name="active" value="1" {{ $entity->active ? 'checked' : '' }}>
+        <label class="form-check-label" for="active">Dozent:in ist aktiv</label>
     </div>
     <button type="submit" class="btn btn-success">Speichern</button>
     <a href="{{ url('lecturers') }}" class="btn btn-danger">Abbrechen</a>

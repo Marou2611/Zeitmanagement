@@ -5,7 +5,14 @@
 <!-- Print message if no timetable available -->
 @if(count($entity->timetables) == 0)
 <div class="alert alert-info" role="alert">
-    Der Dozent hat bisher keine Stundenpläne eingereicht.
+    Der/die Dozent:in hat noch keine Stundenpläne eingereicht.
+</div>
+@endif
+
+<!-- Print message if lecturer is inactive -->
+@if(!$entity->active)
+<div class="alert alert-warning" role="alert">
+    Der/die Dozent:in ist inaktiv.
 </div>
 @endif
 
