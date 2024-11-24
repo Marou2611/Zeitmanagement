@@ -33,6 +33,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Umgebungsvariablen für die .env-Datei
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 
+# Artisan Key generieren
+RUN php artisan key:generate
+
 # Apache-Konfiguration anpassen
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
     && sed -ri -e 's!/var/www/!/var/www/html/public!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
@@ -41,4 +44,3 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-avail
 EXPOSE 80
 
 # Startbefehl für Apache
-CMD ["apache2-foreground"]
