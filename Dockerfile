@@ -26,8 +26,9 @@ COPY . /var/www/html
 # Abhängigkeiten installieren
 RUN composer install --no-dev --optimize-autoloader
 
-# Rechte für Laravel-Verzeichnisse setzen
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+# Sicherstellen, dass die Verzeichnisse existieren und die richtigen Berechtigungen haben
+RUN mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Umgebungsvariablen für die .env-Datei
@@ -44,3 +45,4 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-avail
 EXPOSE 80
 
 # Startbefehl für Apache
+CMD ["apache2-foreground"]
