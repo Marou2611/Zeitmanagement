@@ -37,6 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/lecturers/update/{id}', [LecturerController::class, 'postUpdate']);
     Route::get('/lecturers/delete/{id}', [LecturerController::class, 'getDelete']);
     Route::get('/lecturers/json', [LecturerController::class, 'getJson']);
+    Route::get('lecturers/import', [LecturerController::class, 'getImportForm'])->name('lecturers.import');
+    Route::post('lecturers/import', [LecturerController::class, 'postImportCsv'])->name('lecturers.import.post');
 
     Route::get('/semesters', [SemesterController::class, 'getIndex']);
     Route::get('/semesters/index', [SemesterController::class, 'getIndex']);
