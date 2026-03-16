@@ -35,7 +35,8 @@ RUN mkdir -p /var/www/html/storage/logs /var/www/html/bootstrap/cache \
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 
 # Artisan Key generieren
-RUN php artisan key:generate
+
+RUN cp .env.example .env && php artisan key:generate
 
 # Apache-Konfiguration anpassen
 RUN sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf \
