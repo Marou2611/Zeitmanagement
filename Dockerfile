@@ -2,7 +2,6 @@ FROM php:8.3-apache
 
 WORKDIR /var/www/html
 
-# System-Abhängigkeiten installieren
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -14,22 +13,19 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install gd pdo pdo_mysql \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Composer installieren
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Projektdateien kopieren
 COPY . /var/www/html
 
-# Composer-Pakete installieren
 RUN composer install --no-dev --optimize-autoloader
 
-# Berechtigungen setzen
 RUN mkdir -p storage/logs bootstrap/cache \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# Apache Module aktivieren
-RUN a2enmod rewrite headers
+# ✅ MPM-Fix + Module aktivieren (zur BUILD-Zeit)
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork rewrite headers
 
 # Apache Virtual Host konfigurieren
 RUN cat > /etc/apache2/sites-available/000-default.conf << 'APACHE'
