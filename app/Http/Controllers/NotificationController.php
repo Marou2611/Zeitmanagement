@@ -87,72 +87,77 @@ class NotificationController extends Controller
     }
 
     // Start process of sending notifications to lecturers - limit to 10 notifications
-    public function sendNotification()
-    {
-        // get notifications wit done is false
-        $notifications = Notification::where('done', false)->limit(5)->get();
+ public function sendNotification()
+{
+    // get notifications wit done is false
+    $notifications = Notification::where('done', false)->limit(5)->get();
 
-        // loop through all notifications
-        foreach ($notifications as $notification) {
-            // get lecturer
-            /** @var \App\Models\Lecturer $lecturer */
-            $lecturer = Lecturer::find($notification->lecturer_id);
+    // loop through all notifications
+    foreach ($notifications as $notification) {
+        // get lecturer
+        /** @var \App\Models\Lecturer $lecturer */
+        $lecturer = Lecturer::find($notification->lecturer_id);
 
-            // get semester
-            $semester = Semester::find($notification->semester_id);
+        // get semester
+        $semester = Semester::find($notification->semester_id);
 
-            // send notification to lecturer with email template
-            // Generate signed URL and email it to the user
-            $timetableUrl = URL::temporarySignedRoute(
-                'lecturer.timetable',
-                now()->addMonths(3),
-                [
-                    'lecturer' => $lecturer->id,
-                    'semester' => $semester->id
-                ]
-            );
+        // send notification to lecturer with email template
+        // Generate signed URL and email it to the user
+        $timetableUrl = URL::temporarySignedRoute(
+            'lecturer.timetable',
+            now()->addMonths(3),
+            [
+                'lecturer' => $lecturer->id,
+                'semester' => $semester->id
+            ]
+        );
 
-            // Benachrichtigung an Dozenten mit Aufforderung zur Eingabe seines Stundenplans und Zeitkontingents für das Semester
-            switch ($notification->kind) {
-                case 1:
-                    $lecturer->notify(new CustomEmail(
-                        'Dein Zeitplan für das Semester "' . $semester->name . '"',
-                        'Zeitmanagement - HS OS',
-                        'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                        'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
-                        $timetableUrl,
-                        'Zur Eingabe des Zeitplans'
-                    ));
-                    break;
-                case 2:
-                    $lecturer->notify(new CustomEmail(
-                        'Erinnerung: Dein Stundenplan für das Semester "' . $semester->name . '"',
-                        'Zeitmanagement - HS OS',
-                        'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                        'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
-                        $timetableUrl,
-                        'Zur Eingabe des Zeitplans'
-                    ));
-                case 3:
-                    $lecturer->notify(new CustomEmail(
-                        'WICHTIG: Dein Zeitplan für das Semester "' . $semester->name . '"',
-                        'Zeitmanagement - HS OS',
-                        'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                        'bitte gib uns dringend (!) deinen Zeitplan für das ' . $semester->name . ' weiter, um die Lehrplanung zu ermöglichen. Klicke dazu auf den folgenden Button:',
-                        $timetableUrl,
-                        'Zur Eingabe des Zeitplans'
-                    ));
-                    break;
-            }
-
-            // update notification status
-            $notification->done = true;
-            $notification->save();
+        // Benachrichtigung an Dozenten mit Aufforderung zur Eingabe seines Stundenplans und Zeitkontingents für das Semester
+        switch ($notification->kind) {
+            case 1:
+                $lecturer->notify(new CustomEmail(
+                    'Dein Zeitplan für das Semester "' . $semester->name . '"',
+                    'Zeitmanagement - HS OS',
+                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                    'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
+                    $timetableUrl,
+                    'Zur Eingabe des Zeitplans'
+                ));
+                break;
+            case 2:
+                $lecturer->notify(new CustomEmail(
+                    'Erinnerung: Dein Stundenplan für das Semester "' . $semester->name . '"',
+                    'Zeitmanagement - HS OS',
+                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                    'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
+                    $timetableUrl,
+                    'Zur Eingabe des Zeitplans'
+                ));
+                break;
+            case 3:
+                $lecturer->notify(new CustomEmail(
+                    'WICHTIG: Dein Zeitplan für das Semester "' . $semester->name . '"',
+                    'Zeitmanagement - HS OS',
+                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                    'bitte gib uns dringend (!) deinen Zeitplan für das ' . $semester->name . ' weiter, um die Lehrplanung zu ermöglichen. Klicke dazu auf den folgenden Button:',
+                    $timetableUrl,
+                    'Zur Eingabe des Zeitplans'
+                ));
+                break;
         }
 
-        // return success message
-        return redirect('semesters/index')->with('success', 'Benachrichtigungen wurden erfolgreich versendet');
+        // update notification status
+        $notification->done = true;
+        $notification->save();
     }
+
+    // return success message
+    if (app()->runningInConsole()) {
+        return true;
+    }
+    return redirect('semesters/index')->with('success', 'Benachrichtigungen wurden erfolgreich versendet');
+}
+
 
     public function overview()
     {
