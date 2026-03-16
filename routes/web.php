@@ -7,23 +7,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TimetableController;
 use Illuminate\Support\Facades\Route;
 
-// TEMPORÄRE SETUP-ROUTE - nach Nutzung löschen!
-Route::get('/setup-admin', function () {
-    if (\App\Models\User::where('email', 'admin@zeitmanagement.de')->exists()) {
-        return 'User existiert bereits! Login: admin@zeitmanagement.de / Admin1234!';
-    }
-    \App\Models\User::create([
-        'name'     => 'Admin',
-        'email'    => 'admin@zeitmanagement.de',
-        'password' => bcrypt('Admin1234!'),
-    ]);
-    return '✅ User erstellt! Email: admin@zeitmanagement.de | Passwort: Admin1234! — Bitte jetzt einloggen und diese Route löschen!';
-});
 
-Route::get('/', function () {
-    // Redirect to login page
-    return redirect('/login');
-});
 
 Route::get('/dashboard', function () {
     // Redirect to semesters page
