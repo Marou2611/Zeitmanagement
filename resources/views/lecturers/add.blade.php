@@ -22,6 +22,7 @@
         <input type="text" name="phone" class="form-control" id="phone" placeholder="Telefon">
         <label for="phone">Telefon</label>
     </div>
+     <input type="hidden" name="active" value="1">
     <button type="submit" class="btn btn-success">Speichern</button>
     <a href="{{ url('lecturers') }}" class="btn btn-danger">Abbrechen</a>
 </form>
