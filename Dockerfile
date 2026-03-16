@@ -57,6 +57,7 @@ RUN { \
     echo 'php artisan config:clear'; \
     echo 'php artisan cache:clear'; \
     echo 'php artisan migrate --force'; \
+    echo 'php artisan schedule:work &'; \
     echo 'php-fpm -D'; \
     echo 'exec nginx -g "daemon off;"'; \
 } > /start.sh && chmod +x /start.sh
