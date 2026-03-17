@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Notifications\CustomEmail;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController extends Controller
 {
@@ -25,6 +26,11 @@ class NotificationController extends Controller
     public function markOverdue()
     {
         $currentSemester = Semester::orderBy('created_at', 'desc')->first();
+
+        // Prüfe ob ein Semester existiert
+        if (!$currentSemester) {
+            return;
+        }
 
         // Hole alle Dozenten, die noch keinen Stundenplan für das aktuelle Semester eingereicht haben
         $lecturers = Lecturer::whereDoesntHave('timetables', function ($query) use ($currentSemester) {
@@ -87,82 +93,116 @@ class NotificationController extends Controller
     }
 
     // Start process of sending notifications to lecturers - limit to 10 notifications
- public function sendNotification()
-{
-    // get notifications wit done is false
-    $notifications = Notification::where('done', false)->limit(5)->get();
+    public function sendNotification()
+    {
+        // get notifications with done is false
+        $notifications = Notification::where('done', false)->limit(5)->get();
 
-    // loop through all notifications
-    foreach ($notifications as $notification) {
-        // get lecturer
-        /** @var \App\Models\Lecturer $lecturer */
-        $lecturer = Lecturer::find($notification->lecturer_id);
+        // loop through all notifications
+        foreach ($notifications as $notification) {
+            // get lecturer
+            /** @var \App\Models\Lecturer $lecturer */
+            $lecturer = Lecturer::find($notification->lecturer_id);
 
-        // get semester
-        $semester = Semester::find($notification->semester_id);
+            // get semester
+            $semester = Semester::find($notification->semester_id);
 
-        // send notification to lecturer with email template
-        // Generate signed URL and email it to the user
-        $timetableUrl = URL::temporarySignedRoute(
-            'lecturer.timetable',
-            now()->addMonths(3),
-            [
-                'lecturer' => $lecturer->id,
-                'semester' => $semester->id
-            ]
-        );
+            // Prüfe ob Lecturer und Semester existieren
+            if (!$lecturer) {
+                Log::error("Lecturer not found for notification ID: {$notification->id}, lecturer_id: {$notification->lecturer_id}");
+                $notification->done = true;
+                $notification->save();
+                continue;
+            }
 
-        // Benachrichtigung an Dozenten mit Aufforderung zur Eingabe seines Stundenplans und Zeitkontingents für das Semester
-        switch ($notification->kind) {
-            case 1:
-                $lecturer->notify(new CustomEmail(
-                    'Dein Zeitplan für das Semester "' . $semester->name . '"',
-                    'Zeitmanagement - HS OS',
-                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                    'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
-                    $timetableUrl,
-                    'Zur Eingabe des Zeitplans'
-                ));
-                break;
-            case 2:
-                $lecturer->notify(new CustomEmail(
-                    'Erinnerung: Dein Stundenplan für das Semester "' . $semester->name . '"',
-                    'Zeitmanagement - HS OS',
-                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                    'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
-                    $timetableUrl,
-                    'Zur Eingabe des Zeitplans'
-                ));
-                break;
-            case 3:
-                $lecturer->notify(new CustomEmail(
-                    'WICHTIG: Dein Zeitplan für das Semester "' . $semester->name . '"',
-                    'Zeitmanagement - HS OS',
-                    'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
-                    'bitte gib uns dringend (!) deinen Zeitplan für das ' . $semester->name . ' weiter, um die Lehrplanung zu ermöglichen. Klicke dazu auf den folgenden Button:',
-                    $timetableUrl,
-                    'Zur Eingabe des Zeitplans'
-                ));
-                break;
+            if (!$semester) {
+                Log::error("Semester not found for notification ID: {$notification->id}, semester_id: {$notification->semester_id}");
+                $notification->done = true;
+                $notification->save();
+                continue;
+            }
+
+            try {
+                // send notification to lecturer with email template
+                // Generate signed URL and email it to the user
+                $timetableUrl = URL::temporarySignedRoute(
+                    'lecturer.timetable',
+                    now()->addMonths(3),
+                    [
+                        'lecturer' => $lecturer->id,
+                        'semester' => $semester->id
+                    ]
+                );
+
+                // Benachrichtigung an Dozenten mit Aufforderung zur Eingabe seines Stundenplans und Zeitkontingents für das Semester
+                switch ($notification->kind) {
+                    case 1:
+                        $lecturer->notify(new CustomEmail(
+                            'Dein Zeitplan für das Semester "' . $semester->name . '"',
+                            'Zeitmanagement - HS OS',
+                            'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                            'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
+                            $timetableUrl,
+                            'Zur Eingabe des Zeitplans'
+                        ));
+                        break;
+                    case 2:
+                        $lecturer->notify(new CustomEmail(
+                            'Erinnerung: Dein Stundenplan für das Semester "' . $semester->name . '"',
+                            'Zeitmanagement - HS OS',
+                            'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                            'bitte gib deinen Zeitplan für das ' . $semester->name . ' ein, um die Lehrplanung zu vereinfachen. Klicke dazu auf den folgenden Button:',
+                            $timetableUrl,
+                            'Zur Eingabe des Zeitplans'
+                        ));
+                        break;
+                    case 3:
+                        $lecturer->notify(new CustomEmail(
+                            'WICHTIG: Dein Zeitplan für das Semester "' . $semester->name . '"',
+                            'Zeitmanagement - HS OS',
+                            'Hallo ' . $lecturer->firstname . ' ' . $lecturer->lastname . ',',
+                            'bitte gib uns dringend (!) deinen Zeitplan für das ' . $semester->name . ' weiter, um die Lehrplanung zu ermöglichen. Klicke dazu auf den folgenden Button:',
+                            $timetableUrl,
+                            'Zur Eingabe des Zeitplans'
+                        ));
+                        break;
+                }
+
+                // update notification status
+                $notification->done = true;
+                $notification->save();
+
+                Log::info("Email sent successfully to lecturer: {$lecturer->email}");
+
+            } catch (\Exception $e) {
+                Log::error("Failed to send email: " . $e->getMessage());
+                $notification->done = true;
+                $notification->save();
+            }
         }
 
-        // update notification status
-        $notification->done = true;
-        $notification->save();
+        // return success message
+        if (app()->runningInConsole()) {
+            return true;
+        }
+        return redirect('semesters/index')->with('success', 'Benachrichtigungen wurden erfolgreich versendet');
     }
-
-    // return success message
-    if (app()->runningInConsole()) {
-        return true;
-    }
-    return redirect('semesters/index')->with('success', 'Benachrichtigungen wurden erfolgreich versendet');
-}
 
 
     public function overview()
     {
         // Hole das aktuelle Semester aus der Datenbank (zuletzt erstelltes Semester)
         $currentSemester = Semester::orderBy('created_at', 'desc')->first();
+
+        // Prüfe ob ein Semester existiert
+        if (!$currentSemester) {
+            return view('notifications.index', [
+                'submittedTimetables' => 0,
+                'pendingResponses' => 0,
+                'pendingEmails' => 0,
+                'currentSemester' => null
+            ]);
+        }
 
         // Zähle die eingereichten Stundenpläne für das aktuelle Semester
         $submittedTimetables = Timetable::where('semester_id', $currentSemester->id)
@@ -185,8 +225,6 @@ class NotificationController extends Controller
                     ->where('semester_id', $currentSemester->id);
             });
         })->count();
-
-        // $pendingResponses = 2;
 
         // Zähle die ausstehenden Emails
         $pendingEmails = Notification::where('semester_id', $currentSemester->id)
