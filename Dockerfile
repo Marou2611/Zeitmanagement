@@ -12,27 +12,27 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN printf 'server {\n\
-    listen 80 default_server;\n\
-    root /var/www/html/public;\n\
-    index index.php index.html;\n\
-    client_max_body_size 50M;\n\
-\n\
-    location / {\n\
-        try_files $uri $uri/ /index.php?$query_string;\n\
-    }\n\
-\n\
-    location ~ \\.php$ {\n\
-        include fastcgi_params;\n\
-        fastcgi_pass 127.0.0.1:9000;\n\
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
-        fastcgi_index index.php;\n\
-    }\n\
-\n\
-    location ~ /\\.ht {\n\
-        deny all;\n\
-    }\n\
-}\n' > /etc/nginx/sites-available/default
+RUN printf 'server {\
+    listen 80 default_server;\
+    root /var/www/html/public;\
+    index index.php index.html;\
+    client_max_body_size 50M;\
+\
+    location / {\
+        try_files $uri $uri/ /index.php?$query_string;\
+    }\
+\
+    location ~ \\.php$ {\
+        include fastcgi_params;\
+        fastcgi_pass 127.0.0.1:9000;\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\
+        fastcgi_index index.php;\
+    }\
+\
+    location ~ /\\.ht {\
+        deny all;\
+    }\
+}' > /etc/nginx/sites-available/default
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -59,7 +59,7 @@ RUN { \
     echo 'php artisan cache:clear'; \
     echo 'php artisan migrate --force'; \
     echo 'php artisan schedule:work &'; \
-    echo 'php artisan queue:work --stop-when-empty &'; \
+    echo 'php artisan queue:work --max-time=60 --sleep=3 --tries=3 &'; \
     echo 'php-fpm -D'; \
     echo 'exec nginx -g "daemon off;"'; \
 } > /start.sh && chmod +x /start.sh
